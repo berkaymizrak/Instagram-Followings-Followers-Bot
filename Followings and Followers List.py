@@ -122,8 +122,8 @@ driver = Selenium.source_path('chromedriver.exe')
 # Check if program has permission to run from developer by API
 Connect.check_run(code, 30, sound_error=True)
 
-login_succesful = False
 while True:
+    login_succesful = False
     try:
         print()
         print('-' * 40)
