@@ -18,11 +18,15 @@ print('\n\t\t\twww.DaktiNetwork.com')
 
 try:
     import time
+    import os
 
     from selenium import webdriver
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
+
+    import dotenv
+    dotenv.load_dotenv()
 
     from Functions import Progress
     from Functions import File
@@ -69,23 +73,27 @@ def scroll_div(num):
             count += 1
         Progress.progress(count=num_current_follows, total=num, now=now, message='Fetching...')
         if count > 15:
-            print('\n--> It has been too long time that program could not fetch new data. Now will continue to process.')
+            print('\n--> It has been too long time that program could not fetch new data. Now will ignore and continue to process.')
             match = True
 
 
+username = os.getenv("insta_username")
+pwd = os.getenv("insta_pwd")
 
-username = input('\nUsername: ')
+if not username:
+    username = input('\nUsername: ')
 
-while True:
-    try:
-        pwd = input('Password: ')
+if not pwd:
+    while True:
+        try:
+            pwd = input('Password: ')
 
-        if len(pwd) < 6:
-            raise Exception
+            if len(pwd) < 6:
+                raise Exception
 
-        break
-    except:
-        print('\n--> Password can not be shorter than 6 characters.')
+            break
+        except:
+            print('\n--> Password can not be shorter than 6 characters.')
 
 while True:
     try:
