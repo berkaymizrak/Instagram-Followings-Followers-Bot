@@ -75,7 +75,17 @@ def scroll_div(num):
 
 
 username = input('\nUsername: ')
-pwd = input('Password: ')
+
+while True:
+    try:
+        pwd = input('Password: ')
+
+        if len(pwd) < 6:
+            raise Exception
+
+        break
+    except:
+        print('\n--> Password can not be shorter than 6 characters.')
 
 while True:
     try:
@@ -109,7 +119,7 @@ while True:
     try:
         print()
         print('-' * 40)
-        print('\nStarting...\n')
+        print('\nStarting...')
 
         try:
             # Check if browser still open. If not, raise Exception and create Browser again.
@@ -126,7 +136,7 @@ while True:
             count_reflesh += 1
             if count_reflesh > 3:
                 browser.quit()
-                message = 'Program shot down because of errors.'
+                message = 'Program shutting down because of errors.'
                 Progress.exit_app(message=message, exit_all=True)
 
             # Go to the link and check the xpath given if element present on the page.
@@ -157,16 +167,8 @@ while True:
             except:
                 pass
 
-            url = 'https://www.instagram.com/'
-            xpath = '//div[@id = "react-root"]'
-            Selenium.check_page(browser, url, xpath, 10)
-
-            try:
-                WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.XPATH, "//a[contains(@class,'notranslate')]")))
-                print('--- Successfully Logged In! ---')
-                login_succesful = True
-            except:
-                WebDriverWait(browser, 2).until(EC.presence_of_element_located((By.ID, "slfErrorAlert")))
+            if url == browser.current_url:
+                WebDriverWait(browser, 3).until(EC.presence_of_element_located((By.ID, "slfErrorAlert")))
                 print('\nUsername or password wrong, please enter again: ')
                 login_succesful = False
 
@@ -174,6 +176,16 @@ while True:
                 pwd = input('Password: ')
                 if user == 1:
                     control_user = username
+
+                continue
+
+            url = 'https://www.instagram.com/'
+            xpath = '//div[@id = "react-root"]'
+            Selenium.check_page(browser, url, xpath, 10)
+
+            WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.XPATH, "//a[contains(@class,'notranslate')]")))
+            print('\n--- Successfully Logged In! ---')
+            login_succesful = True
 
         url = 'https://www.instagram.com/%s/' % control_user
         xpath = '//div[@id = "react-root"]'
@@ -209,7 +221,7 @@ while True:
 
         print('\n\nAccount Followers are calculating, please wait...')
 
-        followers_list = []
+        followers_list = list()
         followers = browser.find_elements_by_xpath("//a[contains(@class,'notranslate')]")
 
         now = time.time()
@@ -245,7 +257,7 @@ while True:
 
         print('\n\nAccount Followings are calculating, please wait...')
 
-        followings_list = []
+        followings_list = list()
         followings = browser.find_elements_by_xpath("//a[contains(@class,'notranslate')]")
 
         now = time.time()
@@ -261,7 +273,7 @@ while True:
 
         browser.quit()
 
-        followings_list_final = []
+        followings_list_final = list()
         for person in followings_list:
             if person not in followers_list:
                 followings_list_final.append(person)
@@ -292,7 +304,7 @@ while True:
         txt_file_followings = "insta-not-folow-back-to-you_%s.txt" % control_user
         File.save_records_list(txt_file=txt_file_followings, records_list=followings_list_final, overwrite=True, exit_all=False)
 
-        Progress.sound_notify()
+        Progress.sound_notify_times(3)
 
         message = " %s people found who doesn't follow you back.\n" \
                   " %s people found who you don't follow back.\n" \

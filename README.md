@@ -36,4 +36,4 @@ Whose account will be checked for followers? [select 1 or 2]
 
 <hr>
 
-![Proxy Scraper Screenshot](https://github.com/berkaymizrak/Instagram-Followings-Followers-Bot/blob/master/Functions/instagram_screen-3.png?raw=true)
+![Proxy Scraper Screenshot](https://github.com/berkaymizrak/Instagram-Followings-Followers-Bot/blob/master/Functions/instagram_screen-5.png?raw=true)
