@@ -20,6 +20,7 @@ try:
     from python3_anticaptcha import NoCaptchaTaskProxyless
 
     from Functions import File
+    from Functions import String
     from Functions import Progress
 except Exception as e:
     print()
@@ -161,7 +162,7 @@ def captcha_finder(browser):
     src = browser.page_source
     captcha_found = False
 
-    src = Progress.lower_string(src)  # Turkish lower function
+    src = String.lower_string(src)  # Turkish lower function
     src = src.replace('robots', '')
 
     keywords = [

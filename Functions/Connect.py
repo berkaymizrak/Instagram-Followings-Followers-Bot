@@ -20,6 +20,7 @@ try:
 
     import dotenv
     dotenv.load_dotenv()
+
     from Functions import File
     from Functions import Progress
 except Exception as e:
@@ -103,13 +104,13 @@ def check_run(program_code, reload_time=30, sound_error=True):
     length_of_last_message_MAX = 0
     while True:
         try:
-            calistir = connect_api(code=program_code)  # Mostly returns True or False Boolean upto what you set on API
-            if calistir != True:  # run only if calistir is True.
-                calistir = None
+            run = connect_api(code=program_code)  # Mostly returns True or False Boolean upto what you set on API
+            if run != True:  # run only if calistir is True.
+                run = None
         except:
-            calistir = None
+            run = None
 
-        if calistir:
+        if run:
             if message_pasted:
                 # If there was "False calistir" and 'count down' printed,
                 # paste space as much as pasted text before.

@@ -26,6 +26,7 @@ try:
     from docx.enum.style import WD_STYLE_TYPE
 
     from Functions import Progress
+    from Functions import String
 except Exception as e:
     print()
     print(e)
@@ -34,6 +35,7 @@ except Exception as e:
 
 
 def create_folder(folder_name, path='./', exit_all=True):
+    folder_name = windows_folder_name(folder_name)
     path = path + folder_name
     try:
         if not os.path.exists(path):
@@ -42,6 +44,12 @@ def create_folder(folder_name, path='./', exit_all=True):
         message = '--> An error occurred while creating folder. Please try again with running program as administrator or create folder by yourself.\n' \
                   'Folder Name: %s' % folder_name
         Progress.exit_app(message=message, e=e, exit_all=exit_all)
+
+def windows_folder_name(name):
+    forbidden_character_list = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
+    for character in forbidden_character_list:
+        name = name.replace(character, '')
+    return name
 
 def save_dict_with_pprint_pformat(file, dict_as_string, exit_all=False):
     if isinstance(dict_as_string, str):
@@ -291,12 +299,6 @@ def write_ok_and_false_proxy(record_ip, error_file='Recorded FALSE Proxies.txt',
     if record_ip not in error_ip_list:
         save_records_list(error_file, [record_ip], overwrite=False, exit_all=False)
 
-def windows_folder_name(name):
-    forbidden_character_list = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
-    for character in forbidden_character_list:
-        name = name.replace(character, '')
-    return name
-
 def find_file(file, path='.'):
     if isinstance(file, str):
         if os.path.exists(file):
@@ -305,7 +307,7 @@ def find_file(file, path='.'):
                 if file.lower() == folder_file.lower():
                     file = folder_file
                     break
-                elif Progress.lower_string(file) == Progress.lower_string(folder_file):
+                elif String.lower_string(file) == String.lower_string(folder_file):
                     # Lower case file name with Turkish characters.
                     file = folder_file
                     break
