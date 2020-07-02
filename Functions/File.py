@@ -355,17 +355,41 @@ def excel_read_to_dict(excel, number_of_sheet=0):
 
     all_data = dict()
     number_of_data = 0
+
+    # print(sheet.ncols)
+    # print(sheet.nrows)
+    # print(sheet.cell_value(1, 5))
+    # print(sheet.row(1))
+    # print(sheet.row(1)[5])
+    # print(sheet.row(1)[5].value)
+    #
+    # print(sheet.get_rows())
+    # print(sheet.col_values(5))
+    # print(sheet.row_values(1))
+
+
+    # input('DEVAM')
+    # for rownum in range(sheet.nrows):
+    #     for col_num in range(sheet.ncols):
+    #         value = str(sheet.row(rownum)[col_num].value)
+    #         print(value)
+
     for y in range(number_of_row):
         key = sheet.cell_value(rowx=y, colx=0)
         try:
             key = int(key)
         except:
             pass
+
+        # I only get integer keys which means excel rows which has integer at first cell.
+        # This is for not getting header rows in my dictionary.
         if isinstance(key, int):
             number_of_data += 1
-            all_data[key] = list()
+            all_data[number_of_data] = list()
             for x in range(number_of_column):
-                all_data[key].append(sheet.cell_value(rowx=y, colx=x))
+                val = sheet.cell_value(rowx=y, colx=x)
+                val = String.float_to_integer(val, force_number=False)
+                all_data[number_of_data].append(val)
 
         count += 1
 
@@ -399,14 +423,14 @@ def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', e
             return
 
         if len(all_data):
-            length = 0
+            length_max = 0
             for val in all_data.values():
-                if length < len(val):
+                if length_max < len(val):
                     # Find the row which has maximum length
-                    length = len(val)
+                    length_max = len(val)
 
             i = 0
-            while len(headers) < (length - 1):
+            while len(headers) < length_max:
                 # if maximum length of any row larger than HEADERS, add "Header %i" rest of the headers
                 i += 1
                 headers.append('Header %s' % i)
@@ -414,8 +438,8 @@ def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', e
             for key in list(all_data.keys()):
                 # if length of Headers larger than any row, add empty cell end of the row
                 while 0 <= (len(headers) - len(all_data[key])):
-                    length = len(all_data[key])
-                    all_data[key].insert(length - 1, '')
+                    length_max = len(all_data[key])
+                    all_data[key].insert(length_max, '')
 
         sizes_exist = False
         if sizes:
@@ -486,10 +510,8 @@ def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', e
                     worksheet.write(row, col, elem, cell_format_regular)
             row += 1
 
-
             count += 1
             Progress.progress(count=count, total=total, now=now, )
-
 
         print()
         workbook.close()

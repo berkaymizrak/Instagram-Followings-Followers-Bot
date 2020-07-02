@@ -7,6 +7,8 @@ try:
     import time
     from datetime import datetime
 
+    import decimal
+
     from Functions import Progress
 except Exception as e:
     print()
@@ -108,3 +110,45 @@ number = 34908
 date = date_number_to_date(number)
 """
 # USAGE OF NUMBER TO DATE -----------------------
+
+
+# if force_number, try to make it integer or float.
+# If float, check number of decimal and
+# 1) if decimal is 0 make it integer.
+# 2) if decimal has 1 or 2 numbers, make it float.
+# 3) if decimal has more than 2 numbers, make it float and round it to 2 decimals.
+# if the input is string with characters which is not number, returns same string.
+def float_to_integer(number, force_number=True):
+    if force_number:
+        if isinstance(number, str):
+            try:
+                number = float(number)
+                number = round(number, 2)
+            except:
+                pass
+        if isinstance(number, str):
+            try:
+                number = int(number)
+            except:
+                pass
+
+    if isinstance(number, float):
+        d = decimal.Decimal(str(number))
+        number_of_dec = -d.as_tuple().exponent
+        number_dec = str(abs(number - int(number)))[2:]
+
+        try:
+            number_dec = int(number_dec)
+        except:
+            pass
+
+        if not number_dec:
+            number = int(number)
+        else:
+            if number_of_dec == 1:
+                number = round(number, 1)
+            else:
+                number = round(number, 2)
+
+    return number
+

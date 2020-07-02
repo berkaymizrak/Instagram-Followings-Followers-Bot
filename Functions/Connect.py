@@ -30,7 +30,7 @@ except Exception as e:
         input('\n! ! ERROR --> A module is not installed...')
 
 
-def connect_api(https=True, domain=None, endpoint='api/external_program/', code=None, inform_user_periodically=False, show_error=False, sound_error=False, exit_all=False):
+def connect_api(https=True, domain=None, endpoint='api/external_program/', code='all', program='', inform_user_periodically=False, show_error=False, sound_error=False, exit_all=False):
 
     if not domain:
         domain = os.getenv("domain")
@@ -39,7 +39,6 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
     time.sleep(0.01)
     x = 0
     db_settings_dict = dict()
-    answer = None
     if https:
         url_first = 'https'
     else:
@@ -50,28 +49,36 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
             x += 1
             url = '%s://%s/%s' % (url_first, domain, endpoint)
             headers = {}  # Define, if needed (User-Agent, Accept, Referer etc.)
+            data = {
+                'key': code,
+                'program': program,
+            }
 
-            response = requests.request("GET", url, headers=headers, timeout=10)
+            response = requests.request("GET", url, headers=headers, data=data, timeout=10)
             response.encoding = 'UTF-8'
             response = response.json()
 
-            for setting in response:
-                # My API returns a dictionary which have 'ayar' and 'parametre' in keys.
-                if 'ayar' in setting.keys() and 'parametre' in setting.keys():
+            # My API returns a dictionary which have 'ayar' and 'parametre' in keys.
+            if code == 'all':
+                for setting in response:
                     parameter = setting['parametre']
                     if parameter.lower() == 'true':
                         parameter = True
                     elif parameter.lower() == 'false':
                         parameter = False
 
-                    if code:
-                        if setting['ayar'] == code:
-                            answer = parameter
-                            return answer
-                    else:
-                        db_settings_dict[setting['ayar']] = parameter
-            break
-        except Exception:
+                    db_settings_dict[setting['ayar']] = parameter
+
+                return db_settings_dict
+            else:
+                if response.lower() == 'true':
+                    response = True
+                elif response.lower() == 'false':
+                    response = False
+
+                return response
+
+        except:
             if inform_user_periodically:
                 if x % 2 == 0:
                     message = '\nAn error occurred while connecting to database, trying again...'
@@ -89,12 +96,8 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
                     Progress.exit_app(message=message, exit_all=exit_all)
                     print()
                 break
-    if code:
-        return answer
-    else:
-        return db_settings_dict
 
-def check_run(program_code, reload_time=30, sound_error=True):
+def check_run(program_code, program='', reload_time=30, sound_error=True):
     # This def checks API and get the value of 'program_code'.
     # if program_code is True, def returns
     # else, def stucks untill program_code comes as True.
@@ -104,7 +107,7 @@ def check_run(program_code, reload_time=30, sound_error=True):
     length_of_last_message_MAX = 0
     while True:
         try:
-            run = connect_api(code=program_code)  # Mostly returns True or False Boolean upto what you set on API
+            run = connect_api(code=program_code, program=program, show_error=sound_error)  # Mostly returns True or False Boolean upto what you set on API
             if run != True:  # run only if calistir is True.
                 run = None
         except:
