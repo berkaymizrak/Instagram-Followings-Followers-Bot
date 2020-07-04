@@ -29,25 +29,6 @@ except Exception as e:
         input('\n! ! ERROR --> A module is not installed...')
 
 
-# When you compile your PyQt5 code with pyinstaller,
-# exe file can throw error sometimes.
-# To avoid that, I run below 2 functions before everything in PyQt5 code.
-
-# _append_run_path()
-# driver = source_path("chromedriver.exe")
-def _append_run_path():
-    if getattr(sys, 'frozen', False):
-        pathlist = []
-        pathlist.append(sys._MEIPASS)
-
-        _main_app_path = os.path.dirname(sys.executable)
-        pathlist.append(_main_app_path)
-        os.environ["PATH"] += os.pathsep + os.pathsep.join(pathlist)
-
-def source_path(add_path="chromedriver.exe"):
-    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_path, add_path)
-
 # Scroll down all the way of page
 def scroll_down(browser):
     last_height = browser.execute_script("return document.body.scrollHeight")

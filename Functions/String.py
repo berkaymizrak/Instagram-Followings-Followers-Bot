@@ -152,3 +152,7 @@ def float_to_integer(number, force_number=True):
 
     return number
 
+"""
+items = 'lastPrice', 'change', 'pChange', 'net_oi', 'trend', 'net_change_oi',
+if all(i in main_string for i in items):
+"""

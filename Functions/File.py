@@ -8,6 +8,7 @@ try:
     import time
 
     import os
+    import sys
 
     # import numpy as np
     import pickle
@@ -17,7 +18,6 @@ try:
     import requests
     import json
     import ast
-    from lxml import html
 
     from docx.shared import Inches
     from docx import Document
@@ -32,6 +32,30 @@ except Exception as e:
     print(e)
     while True:
         input('\n! ! ERROR --> A module is not installed...')
+
+
+# When you compile your PyQt5 code with pyinstaller,
+# exe file can throw error sometimes.
+# To avoid that, I run below 2 functions before everything in PyQt5 code.
+def _append_run_path():
+    if getattr(sys, 'frozen', False):
+        pathlist = []
+        pathlist.append(sys._MEIPASS)
+
+        _main_app_path = os.path.dirname(sys.executable)
+        pathlist.append(_main_app_path)
+        os.environ["PATH"] += os.pathsep + os.pathsep.join(pathlist)
+
+def source_path(add_path="chromedriver.exe"):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, add_path)
+# USAGE OF -------------------
+"""
+_append_run_path()
+driver = source_path("chromedriver.exe")
+env_file = source_path(".env")
+"""
+# USAGE OF -------------------
 
 
 def create_folder(folder_name, path='./', exit_all=True):
@@ -201,9 +225,10 @@ else:
     id_last = 0
 """
 
-def save_records_data(txt_file, val_list, exit_all=True):
+def save_records_data(txt_file, val_list, message='File updating...', exit_all=True):
     # This def is for saving data with columns like excel but into the txt file
     try:
+        print(message)
         file = open(txt_file, 'a', encoding='utf-8')
         for val in val_list:
             file.write(str(val))
@@ -214,7 +239,7 @@ def save_records_data(txt_file, val_list, exit_all=True):
         file.write('\n')
 
         file.close()
-        print('\nFile saved.')
+        print('File saved.')
     except Exception as e:
         message = '--> An error occurred while saving file.'
         Progress.exit_app(message=message, e=e, exit_all=exit_all)

@@ -116,8 +116,8 @@ while True:
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
 
 # add path to create execution easily (using such as pyinstaller)
-Selenium._append_run_path()
-driver = Selenium.source_path('chromedriver.exe')
+File._append_run_path()
+driver = File.source_path('chromedriver.exe')
 
 # Check if program has permission to run from developer by API
 Connect.check_run(code, program, 30, sound_error=True)

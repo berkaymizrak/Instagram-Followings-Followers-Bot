@@ -13,16 +13,17 @@ try:
     import requests
     import json
     import ast
-    from lxml import html
+    import lxml
 
     import smtplib
-    from email.mime.text import MIMEText
-
-    import dotenv
-    dotenv.load_dotenv()
+    import email
 
     from Functions import File
     from Functions import Progress
+
+    import dotenv
+    env_file = File.source_path('.env')  # for creating execution with pyinstaller.
+    dotenv.load_dotenv(env_file)
 except Exception as e:
     print()
     print(e)
@@ -31,7 +32,6 @@ except Exception as e:
 
 
 def connect_api(https=True, domain=None, endpoint='api/external_program/', code='all', program='', inform_user_periodically=False, show_error=False, sound_error=False, exit_all=False):
-
     if not domain:
         domain = os.getenv("domain")
 
@@ -44,15 +44,27 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
     else:
         url_first = 'http'
 
+    user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
+
     while True:
         try:
             x += 1
             url = '%s://%s/%s' % (url_first, domain, endpoint)
-            headers = {}  # Define, if needed (User-Agent, Accept, Referer etc.)
-            data = {
-                'key': code,
-                'program': program,
+
+            # Define, if needed (User-Agent, Accept, Referer etc.)
+            headers = {
+                "User-Agent": user_agent,
+                # 'accept': '*/*',
+                # 'accept-encoding': 'gzip, deflate, br',
+                # 'accept-language': 'en-US,en;q=0.9,tr;q=0.8,pl;q=0.7',
             }
+            if endpoint == 'api/external_program/':
+                data = {
+                    'key': code,
+                    'program': program,
+                }
+            else:
+                data = dict()
 
             response = requests.request("GET", url, headers=headers, data=data, timeout=10)
             response.encoding = 'UTF-8'
@@ -60,14 +72,17 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
 
             # My API returns a dictionary which have 'ayar' and 'parametre' in keys.
             if code == 'all':
-                for setting in response:
-                    parameter = setting['parametre']
-                    if parameter.lower() == 'true':
-                        parameter = True
-                    elif parameter.lower() == 'false':
-                        parameter = False
+                if endpoint == 'api/external_program/':
+                    for setting in response:
+                        parameter = setting['parametre']
+                        if parameter.lower() == 'true':
+                            parameter = True
+                        elif parameter.lower() == 'false':
+                            parameter = False
 
-                    db_settings_dict[setting['ayar']] = parameter
+                        db_settings_dict[setting['ayar']] = parameter
+                else:
+                    db_settings_dict = response
 
                 return db_settings_dict
             else:
@@ -81,20 +96,24 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
         except:
             if inform_user_periodically:
                 if x % 2 == 0:
-                    message = '\nAn error occurred while connecting to database, trying again...'
+                    message = '\nAn error occurred while running, trying again...'
+                    print()
                     print('-' * 40)
                     print(message)
                     print()
-            if x >= 5:
+            if x >= 3:
                 end = time.time()
                 passed_time = end - start
-                message = 'An error occurred while connecting to database. Please try again.\n' \
+                message = 'An error occurred while running program. Please try again.\n' \
                         '(Trying time: %s)' % Progress.time_definition(passed_time)
                 if sound_error:
                     Progress.sound_notify()
                 if show_error:
                     Progress.exit_app(message=message, exit_all=exit_all)
                     print()
+                else:
+                    if exit_all:
+                        Progress.exit_app(exit_all=exit_all)
                 break
 
 def check_run(program_code, program='', reload_time=30, sound_error=True):
@@ -107,8 +126,8 @@ def check_run(program_code, program='', reload_time=30, sound_error=True):
     length_of_last_message_MAX = 0
     while True:
         try:
-            run = connect_api(code=program_code, program=program, show_error=sound_error)  # Mostly returns True or False Boolean upto what you set on API
-            if run != True:  # run only if calistir is True.
+            run = connect_api(code=program_code, program=program)  # Mostly returns True or False Boolean upto what you set on API
+            if run != True:  # run only if "run" is True.
                 run = None
         except:
             run = None
@@ -157,7 +176,7 @@ def send_email(message, subject, recipient, login_mail=None, pwd=None, sender='E
         pwd = os.getenv('pwd')
 
     try:
-        msg = MIMEText(message)
+        msg = email.mime.text.MIMEText(message)
 
         msg['Subject'] = subject
         msg['From'] = sender
@@ -231,7 +250,7 @@ def get_proxy(count_loop, selenium=True, save_false_proxies=True, error_file='Re
                     # continue to loop untill get the new proxies.
                     continue
 
-                tree = html.fromstring(page.content)
+                tree = lxml.html.fromstring(page.content)
                 ips = tree.xpath('//table[@id = "proxylisttable"]//tr/td[1]')  # list of all ips
                 ports = tree.xpath('//table[@id = "proxylisttable"]//tr/td[2]')  # list of all ports
                 count_ip = 0

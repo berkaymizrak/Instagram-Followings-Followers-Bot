@@ -17,13 +17,19 @@ except Exception as e:
         input('\n! ! ERROR --> A module is not installed...')
 
 
-def exit_app(e=None, message=None, exit_all=True):
+def exit_app(e=None, message=None, sound=False, sound_times=0, exit_all=True):
     print()
     if exit_all:
         print('!' + '-!-!' * 20)
     else:
         print('-' * 40)
     print()
+    if sound:
+        if sound_times == 0:
+            sound_notify()
+        else:
+            sound_notify_times(sound_times)
+
     if e and message:
         print('ERROR:')
         if str(e) != '':
@@ -45,7 +51,7 @@ def exit_app(e=None, message=None, exit_all=True):
         print('-' * 40)
         print()
 
-def sound_notify():
+def sound_notify(show_error=True):
     try:
         for i in range(0, 3):
             frequency = 2500  # Set Frequency To 2500 Hertz
@@ -57,21 +63,23 @@ def sound_notify():
             duration = 500  # Set Duration To 1000 ms == 1 second
             winsound.Beep(frequency, duration)
     except Exception as e:
-        print('Error on windows sound notification:')
-        print(e)
+        if show_error:
+            print('Error on windows sound notification:')
+            print(e)
 
-def sound_notify_times(times=3):
+def sound_notify_times(times=3, frequency=2500, duration=500, show_error=True):
     try:
         for k in range(0, times):
-            frequency = 2500  # Set Frequency To 2500 Hertz
+            frequency_sound = frequency  # Set Frequency To 2500 Hertz
             if times == 1:
-                duration = 750  # Set Duration To 1000 ms == 1 second
+                duration_sound = 750  # Set Duration To 1000 ms == 1 second
             else:
-                duration = 500  # Set Duration To 1000 ms == 1 second
-            winsound.Beep(frequency, duration)
+                duration_sound = duration  # Set Duration To 1000 ms == 1 second
+            winsound.Beep(frequency_sound, duration_sound)
     except Exception as e:
-        print('Error on windows sound notification:')
-        print(e)
+        if show_error:
+            print('Error on windows sound notification:')
+            print(e)
 
 def speech_text(text, sound_notify_work=False, exit_all=False):
     try:
