@@ -305,6 +305,8 @@ def read_records_data_to_dict(txt_file, show_progress=True, file_not_found_error
                 if not len(read_dict[key]):
                     del read_dict[key]
     except Exception as e:
+        if show_progress:
+            print()
         message = "--> An error occurred while reading file -> '%s'" % txt_file
         Progress.exit_app(e=e, message=message, exit_all=exit_all)
 

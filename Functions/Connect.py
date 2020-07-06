@@ -48,6 +48,7 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
 
     while True:
         try:
+            internet_connection(sound_error=sound_error)
             x += 1
             url = '%s://%s/%s' % (url_first, domain, endpoint)
 
@@ -404,7 +405,7 @@ def internet_connection(timeout=4, reload_time=30, wait_for_network=True, sound_
             # There is no internet connection.
             network = False
 
-        if not wait_for_network or network:
+        if not wait_for_network and network:
             # if there is internet connection OR def overwritten to not wait for network, RETURN
             return network
 
