@@ -120,7 +120,7 @@ File._append_run_path()
 driver = File.source_path('chromedriver.exe')
 
 # Check if program has permission to run from developer by API
-Connect.check_run(code, program, 30, sound_error=True)
+Connect.check_run(code, program, 30, sound_error=True)  # <-- Remove this line in your app or you can create yours.
 
 while True:
     login_succesful = False

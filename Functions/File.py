@@ -49,13 +49,13 @@ def _append_run_path():
 def source_path(add_path="chromedriver.exe"):
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, add_path)
-# USAGE OF -------------------
+# USAGE -------------------
 """
 _append_run_path()
 driver = source_path("chromedriver.exe")
 env_file = source_path(".env")
 """
-# USAGE OF -------------------
+# USAGE -------------------
 
 
 def create_folder(folder_name, path='./', exit_all=True):
@@ -87,13 +87,13 @@ def save_dict_with_pprint_pformat(file, dict_as_string, exit_all=False):
         except Exception as e:
             message = '--> An error occurred while creating file. --> "%s"' % file
             Progress.exit_app(message=message, e=e, exit_all=exit_all)
-# USAGE OF DEF -------------------
+# USAGE -------------------
 """
 import pprint
 save = pprint.pformat(response)
 File.save_dict_with_pprint_pformat(file=txt_file, dict_as_string=save)
 """
-# USAGE OF DEF -------------------
+# USAGE -------------------
 
 def json_dump(url=None, dictionary=None, json_file='Json Data.json', header=None):
     if not header:
@@ -190,6 +190,7 @@ def save_records_list(txt_file, records_list, overwrite=False, exit_all=True):
 """
 File.save_records_list(txt_file=txt_file, records_list=[last_id], overwrite=True, exit_all=False)
 """
+# USAGE for saving last location of automation app --------------------
 
 def read_records_to_list(txt_file, file_not_found_error=False, exit_all=True):
     records = list()
@@ -197,7 +198,7 @@ def read_records_to_list(txt_file, file_not_found_error=False, exit_all=True):
     error_text = ''
     error_def = False
     try:
-        file = open(txt_file,'r', encoding='utf-8')
+        file = open(txt_file, 'r', encoding='latin-1')
         for line in file:
             line = line.replace('\n', '')
             records.append(line)
@@ -224,6 +225,7 @@ if len(id_son) >= 1:
 else:
     id_last = 0
 """
+# USAGE for reading last location of automation app --------------------
 
 def save_records_data(txt_file, val_list, message='File updating...', exit_all=True):
     # This def is for saving data with columns like excel but into the txt file
@@ -341,96 +343,110 @@ def find_file(file, path='.'):
     return file
 
 
-def excel_read_to_dict(excel, number_of_sheet=0):
-    # Check and add xlsx or xls if there is not at the end.
-    file_name, file_extension = os.path.splitext(excel)
-    if file_extension != '.xlsx' or file_extension != '.xls':
-        excel = file_name + '.xlsx'
-
-    excel = find_file(excel)
-    if not os.path.exists(excel):
-        excel2 = None
-
-        # switch between xlsx and xls
-        if file_extension != '.xlsx':
-            excel2 = file_name + '.xls'
-        elif file_extension != '.xls':
-            excel2 = file_name + '.xlsx'
-
-        if excel2:
-            excel2 = find_file(excel2)
-            if not os.path.exists(excel2):
-                message = "! ! File couldn't be found in folder. --> '%s' or '%s'" % (excel, excel2)
-                Progress.exit_app(message=message, exit_all=True)
-            else:
-                excel = excel2
-        else:
-            message = "! ! File couldn't be found in folder. --> '%s'" % (excel)
-            Progress.exit_app(message=message, exit_all=True)
-
-    workbook = xlrd.open_workbook(excel)  # sheet
-    sheet = workbook.sheet_by_index(number_of_sheet)  # page
-
-    number_of_column = sheet.ncols
-    number_of_row = len(sheet.col(0))
-
-    count = 0
-    total = number_of_row
-    now = time.time()
-    message = 'Reading excel...'
-    time.sleep(0.01)
-
+def excel_read_to_dict(excel, number_of_sheet=0, exit_all=False):
     all_data = dict()
-    number_of_data = 0
+    headers = dict()
 
-    # print(sheet.ncols)
-    # print(sheet.nrows)
-    # print(sheet.cell_value(1, 5))
-    # print(sheet.row(1))
-    # print(sheet.row(1)[5])
-    # print(sheet.row(1)[5].value)
-    #
-    # print(sheet.get_rows())
-    # print(sheet.col_values(5))
-    # print(sheet.row_values(1))
+    try:
+        # Check and add xlsx or xls if there is not at the end.
+        file_name, file_extension = os.path.splitext(excel)
+        if file_extension != '.xlsx' or file_extension != '.xls':
+            excel = file_name + '.xlsx'
 
+        # check all versions of the file name if it is exist in directory.
+        # (Checking with all lower and capital characters for excel name if it is equal any file.)
+        excel = find_file(excel)
+        if not os.path.exists(excel):
+            # So given file name could not be found in directory with any combinations of capital and lower characters.
+            excel2 = None
 
-    # input('DEVAM')
-    # for rownum in range(sheet.nrows):
-    #     for col_num in range(sheet.ncols):
-    #         value = str(sheet.row(rownum)[col_num].value)
-    #         print(value)
+            # switch between xlsx and xls
+            if file_extension != '.xlsx':
+                excel2 = file_name + '.xls'
+            elif file_extension != '.xls':
+                excel2 = file_name + '.xlsx'
 
-    for y in range(number_of_row):
-        key = sheet.cell_value(rowx=y, colx=0)
-        try:
-            key = int(key)
-        except:
-            pass
+            if excel2:
+                # if given file name is xlsx, it switched to xls in "excel2"
+                # if given file name is xls, it switched to xlsx in "excel2"
+                # and checking again...
+                excel2 = find_file(excel2)
+                if not os.path.exists(excel2):
+                    message = "! ! File couldn't be found in folder. --> '%s' or '%s'" % (excel, excel2)
+                    Progress.exit_app(message=message, exit_all=exit_all)
+                    return all_data, headers
+                else:
+                    excel = excel2
+            else:
+                message = "! ! File couldn't be found in folder. --> '%s'" % (excel)
+                Progress.exit_app(message=message, exit_all=exit_all)
+                return all_data, headers
 
-        # I only get integer keys which means excel rows which has integer at first cell.
-        # This is for not getting header rows in my dictionary.
-        if isinstance(key, int):
-            number_of_data += 1
-            all_data[number_of_data] = list()
-            for x in range(number_of_column):
-                val = sheet.cell_value(rowx=y, colx=x)
-                val = String.float_to_integer(val, force_number=False)
-                all_data[number_of_data].append(val)
+        workbook = xlrd.open_workbook(excel)  # sheet
+        sheet = workbook.sheet_by_index(number_of_sheet)  # page
 
-        count += 1
+        number_of_column = sheet.ncols
+        number_of_row = len(sheet.col(0))
 
-        Progress.progress(
-            count=count,
-            total=total,
-            now=now,
-            message=message,
-        )
+        count = 0
+        total = number_of_row
+        now = time.time()
+        message = 'Reading excel...'
+        time.sleep(0.01)
+
+        number_of_data = 0
+        number_of_header = 0
+
+        for y in range(number_of_row):
+            key = sheet.cell_value(rowx=y, colx=0)
+            try:
+                key = int(key)
+            except:
+                pass
+
+            # I only get integer keys which means excel rows which has integer at first cell.
+            # This is for not getting header rows in my dictionary.
+            # and I design my excels with ID column at first column.
+            if isinstance(key, int):
+                number_of_data += 1
+                all_data[number_of_data] = list()
+                for x in range(number_of_column):
+                    val = sheet.cell_value(rowx=y, colx=x)
+                    val = String.float_to_integer(val, force_number=False)
+                    all_data[number_of_data].append(val)
+            else:
+                number_of_header += 1
+                headers[number_of_header] = list()
+                for x in range(number_of_column):
+                    val = sheet.cell_value(rowx=y, colx=x)
+                    val = String.float_to_integer(val, force_number=False)
+                    headers[number_of_header].append(val)
+
+            count += 1
+
+            Progress.progress(
+                count=count,
+                total=total,
+                now=now,
+                message=message,
+            )
+    except PermissionError:
+        message = "--> '%s' can't access to this file.\nIt is probably because the file is open. If this excel is open, please close it and re-run program." % excel
+        Progress.exit_app(message=message, exit_all=exit_all)
+    except Exception as e:
+        message = "--> An error occurred while reading file... '%s'" % excel
+        Progress.exit_app(e=e, message=message, exit_all=exit_all)
 
     print('\nNumber of item: %s' % len(all_data))
-    return all_data
+    # it returns a dictionary from 3 rows excel file as:
+    # all_data = {
+    #     1: ['1st Column Value', '2nd Column Value', '3rd Column Value', '4th Column Value', '5th Column Value', ],
+    #     2: ['1st Column Value', '2nd Column Value', '3rd Column Value', '4th Column Value', '5th Column Value', ],
+    #     3: ['1st Column Value', '2nd Column Value', '3rd Column Value', '4th Column Value', '5th Column Value', ],
+    # }
+    return all_data, headers
 
-def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', exit_all=False, ):
+def excel_create(excel, all_data, headers=None, sizes=None, locations=None, page_name='Page1', exit_all=False, ):
     if not headers:
         headers = list()
 
@@ -454,7 +470,10 @@ def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', e
             for val in all_data.values():
                 if length_max < len(val):
                     # Find the row which has maximum length
-                    length_max = len(val)
+                    if isinstance(val[-1], dict):
+                        length_max = len(val) - 1
+                    else:
+                        length_max = len(val)
 
             i = 0
             while len(headers) < length_max:
@@ -464,31 +483,42 @@ def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', e
 
             for key in list(all_data.keys()):
                 # if length of Headers larger than any row, add empty cell end of the row
-                while 0 <= (len(headers) - len(all_data[key])):
-                    length_max = len(all_data[key])
-                    all_data[key].insert(length_max, '')
+                while len(headers) > len(all_data[key]):
+                    all_data[key].append('')
 
-        sizes_exist = False
+
         if sizes:
-            if len(headers) == len(sizes):
-                sizes_exist = True
-
-        if not sizes_exist:
+            while len(headers) > len(sizes):
+                sizes.append(20)
+        else:
             sizes = list()
             for head in headers:
                 sizes.append(25)
+
+        if locations:
+            while len(headers) > len(locations):
+                locations.append('left')
+        else:
+            locations = list()
+            for head in headers:
+                locations.append('left')
+
+        attrs_loc = dict()
+        for val in all_data.values():
+            for elem in val:
+                if isinstance(elem, dict):
+                    for name, attr in elem.items():
+                        if name not in attrs_loc.keys():
+                            headers.append(name)
+                            sizes.append(20)
+                            locations.append('left')
+
+                            attrs_loc[name] = len(headers)
 
         workbook = xlsxwriter.Workbook(excel)
         worksheet = workbook.add_worksheet(page_name)
 
         worksheet.freeze_panes(1, 0)
-
-        cell_format_copyr = workbook.add_format({'border': 1})
-        cell_format_copyr.set_pattern(1)
-        cell_format_copyr.set_bg_color('FABF8F')
-        cell_format_copyr.set_align('center')
-        cell_format_copyr.set_align('vcenter')
-        cell_format_copyr.set_bold()
 
         cell_format_header = workbook.add_format({'border': 1})
         cell_format_header.set_pattern(1)
@@ -502,6 +532,19 @@ def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', e
         cell_format_center_regular.set_align('vcenter')
 
         cell_format_regular = workbook.add_format({'border': 1})
+        cell_format_regular.set_align('left')
+        cell_format_regular.set_align('vcenter')
+
+        cell_format_right_regular = workbook.add_format({'border': 1})
+        cell_format_right_regular.set_align('right')
+        cell_format_right_regular.set_align('vcenter')
+
+        cell_format_copyr = workbook.add_format({'border': 1})
+        cell_format_copyr.set_pattern(1)
+        cell_format_copyr.set_bg_color('FABF8F')
+        cell_format_copyr.set_align('center')
+        cell_format_copyr.set_align('vcenter')
+        cell_format_copyr.set_bold()
 
         row = 0
         col = 0
@@ -524,17 +567,37 @@ def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', e
         time.sleep(0.01)
 
         id_count = 0
-        for key, val in all_data.items():
+        for val in all_data.values():
             id_count += 1
             col = 0
             worksheet.write(row, col, id_count, cell_format_center_regular)
             for elem in val:
+                if isinstance(elem, dict):
+                    continue
+
                 col += 1
-                try:
-                    elem = int(elem)
-                    worksheet.write(row, col, elem, cell_format_center_regular)
-                except:
-                    worksheet.write(row, col, elem, cell_format_regular)
+                if col > len(locations):
+                    go_left = True
+                else:
+                    go_left = False
+                    if locations[col - 1] == 'center':
+                        worksheet.write(row, col, elem, cell_format_center_regular)
+                    elif locations[col - 1] == 'right':
+                        worksheet.write(row, col, elem, cell_format_right_regular)
+                    else:
+                        go_left = True
+                if go_left:
+                    try:
+                        elem = int(elem)
+                        worksheet.write(row, col, elem, cell_format_center_regular)
+                    except:
+                        worksheet.write(row, col, elem, cell_format_regular)
+
+            for elem in val:
+                if isinstance(elem, dict):
+                    for name, attr in elem.items():
+                        worksheet.write(row, attrs_loc[name], attr, cell_format_regular)
+
             row += 1
 
             count += 1
@@ -550,6 +613,12 @@ def excel_create(excel, all_data, headers=None, sizes=None, page_name='Page1', e
     except Exception as e:
         message = "--> An error occurred while creating file... '%s'" % excel
         Progress.exit_app(e=e, message=message, exit_all=exit_all)
+# USAGE -------------------
+"""
+DEFINED IN 'EXCEL READ AND CREATE' REPOSITORY. 
+"""
+# USAGE -------------------
+
 
 def create_word(word, my_list):
     try:

@@ -16,7 +16,7 @@ try:
     import lxml
 
     import smtplib
-    import email
+    from email.mime.text import MIMEText
 
     from Functions import File
     from Functions import Progress
@@ -48,7 +48,6 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
 
     while True:
         try:
-            internet_connection(sound_error=sound_error)
             x += 1
             url = '%s://%s/%s' % (url_first, domain, endpoint)
 
@@ -177,7 +176,7 @@ def send_email(message, subject, recipient, login_mail=None, pwd=None, sender='E
         pwd = os.getenv('pwd')
 
     try:
-        msg = email.mime.text.MIMEText(message)
+        msg = MIMEText(message)
 
         msg['Subject'] = subject
         msg['From'] = sender
@@ -204,9 +203,15 @@ def send_email(message, subject, recipient, login_mail=None, pwd=None, sender='E
         else:
             Progress.exit_app(e=e, exit_all=exit_all)
 
-def get_proxy(count_loop, selenium=True, save_false_proxies=True, error_file='Recorded FALSE Proxies.txt',
+def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=True, error_file='Recorded FALSE Proxies.txt',
               save_ok_proxies=True, ok_file='Recorded OK Proxies.txt', number_of_min_saved_proxies=130,
-              run_test=True, test_header=None, test_url=None, test_timeout=1.5, sound_error=True, ):
+              run_test=True, test_header=None, test_url=None, test_timeout=1.5, sound_error=True):
+    # You can use this function with whether count_loop or get_random.
+    # count_loop helps you to run it in while with using count_loop+=1 and you can receive proxies 1 by 1 in lines of proxy file.
+    # if get_random set True, you get proxy randomly from proxy file without looking count_loop.
+    if get_random:
+        count_loop = 1
+
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
     header = {"User-Agent": user_agent}
 
@@ -248,7 +253,7 @@ def get_proxy(count_loop, selenium=True, save_false_proxies=True, error_file='Re
                     again = True
                     count_loop -= 1
 
-                    # continue to loop untill get the new proxies.
+                    # continue to loop until get the new proxies.
                     continue
 
                 tree = lxml.html.fromstring(page.content)
@@ -288,19 +293,27 @@ def get_proxy(count_loop, selenium=True, save_false_proxies=True, error_file='Re
                 Progress.exit_app(message=message, exit_all=False)
                 continue
 
-            remaining = count_loop % len(ok_ip_save_list)
-            remaining = len(ok_ip_save_list) - remaining
-            if remaining >= len(ok_ip_save_list):
-                remaining = 0
-            # Remaining calculated to get a proxy from our list, from LAST to FIRST.
-            record_ip = ok_ip_save_list[remaining]
+            if get_random:
+                record_ip = random.choice(ok_ip_save_list)
+            else:
+                # Remaining calculated to get a proxy from our list, from LAST to FIRST.
+                remaining = count_loop % len(ok_ip_save_list)
+                remaining = len(ok_ip_save_list) - remaining
+                if remaining >= len(ok_ip_save_list):
+                    remaining = 0
+
+                record_ip = ok_ip_save_list[remaining]
             record_ip = record_ip.replace(' ', '')
             record_ip = record_ip.replace('\n', '')
             record_ip_list = record_ip.split(':', 1)
             if len(record_ip_list) != 2:
-                message = "Proxy doesn't work. Next proxy is testing...\n" \
-                          "IP-Port: %s\tProxy Number: %s" % (
-                    record_ip, remaining)
+                if get_random:
+                    message = "Proxy doesn't work. Next proxy is testing...\n" \
+                              "IP-Port: %s" % record_ip
+                else:
+                    message = "Proxy doesn't work. Next proxy is testing...\n" \
+                              "IP-Port: %s\tProxy Number: %s" % (
+                        record_ip, remaining)
                 print(message)
                 print()
                 again = True
@@ -311,7 +324,7 @@ def get_proxy(count_loop, selenium=True, save_false_proxies=True, error_file='Re
             ip = record_ip_list[0]
             port = record_ip_list[1]
 
-            proxy_decide = {"http": "http://%s:%s" % (ip, port)}
+            proxy_decide = {"http": "http://%s" % record_ip, "https": "https://%s" % record_ip}
 
             if save_false_proxies:
                 if record_ip in error_ip_list:
@@ -336,9 +349,13 @@ def get_proxy(count_loop, selenium=True, save_false_proxies=True, error_file='Re
                     if save_ok_proxies:
                         File.save_records_list(ok_file, ok_ip_save_list, overwrite=True, exit_all=False)
                 except Exception as e:
-                    message = "Proxy doesn't work. Next proxy is testing...\n" \
-                              "IP: %s\tPort: %s\tProxy Number: %s" % (
-                        ip, port, remaining)
+                    if get_random:
+                        message = "Proxy doesn't work. Next proxy is testing...\n" \
+                                  "IP: %s\tPort: %s" % (ip, port)
+                    else:
+                        message = "Proxy doesn't work. Next proxy is testing...\n" \
+                                  "IP: %s\tPort: %s\tProxy Number: %s" % (
+                            ip, port, remaining)
                     print(message)
                     print()
                     again = True
@@ -349,9 +366,13 @@ def get_proxy(count_loop, selenium=True, save_false_proxies=True, error_file='Re
             if selenium:
                 proxy_decide = '--proxy-server=%s:%s' % (ip, port)
             else:
-                proxy_decide = {"http": "http://%s:%s" % (ip, port)}
+                # proxy_decide defined above.
+                pass
 
-            print("Proxy activated. Proxy Number: %s.\nIP: %s\tPort: %s" % (count_loop, ip, port))
+            if get_random:
+                print("Proxy activated.\nIP: %s\tPort: %s" % (ip, port))
+            else:
+                print("Proxy activated. Proxy Number: %s.\nIP: %s\tPort: %s" % (count_loop, ip, port))
         else:
             # def will return NON-PROXY each 10 times
 
@@ -362,10 +383,13 @@ def get_proxy(count_loop, selenium=True, save_false_proxies=True, error_file='Re
                 proxy_decide = {}
 
     print()
-    return count_loop, proxy_decide
+    if get_random:
+        return proxy_decide
+    else:
+        return count_loop, proxy_decide
 # USAGE GET PROXY -----------------------
 """
-count_loop, proxy_decide = get_proxy(count_loop, selenium=False, run_test=False)
+proxy_decide = get_proxy(selenium=False, get_random=True, run_test=False)
 response = requests.get(
     url,
     headers={},

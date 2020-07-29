@@ -24,11 +24,6 @@ def exit_app(e=None, message=None, sound=False, sound_times=0, exit_all=True):
     else:
         print('-' * 40)
     print()
-    if sound:
-        if sound_times == 0:
-            sound_notify()
-        else:
-            sound_notify_times(sound_times)
 
     if e and message:
         print('ERROR:')
@@ -43,6 +38,13 @@ def exit_app(e=None, message=None, sound=False, sound_times=0, exit_all=True):
         if message and str(message) != '':
             print(message)
     print()
+
+    if sound:
+        if sound_times == 0:
+            sound_notify()
+        else:
+            sound_notify_times(sound_times)
+
     if exit_all:
         print('!' + '-!-!' * 20)
         while True:
@@ -92,22 +94,38 @@ def speech_text(text, sound_notify_work=False, exit_all=False):
                   '"%s"' % text
         exit_app(e=e, message=message, exit_all=exit_all)
 
-def progress(count, total, now, message='In progress...', ):
+def progress(count, total, now, message='In progress...', message_first=True, ):
     remaining_time = time_definition(int((total / (count / (time.time() - now))) - (time.time() - now)))
-    passed_time = time_definition(int(time.time() - now))
-    print(
-        "\r{} |{}{}| {}% | {} | {} left."
-            .format(
-            message,
-            "█" * int(25 * count / total),
-            " " * (25 - int(25 * count / total)),
-            int(100 * count / total),
-            passed_time,
-            remaining_time
+    if message_first:
+        passed_time = time_definition(int(time.time() - now))
+        print(
+            "\r{} |{}{}| {}% | {} | {} left."
+                .format(
+                message,
+                "█" * int(25 * count / total),
+                " " * (25 - int(25 * count / total)),
+                int(100 * count / total),
+                passed_time,
+                remaining_time
+            ),
+            flush=True,
+            end=""
+        )
+    else:
+        passed_time = time_definition(int(time.time() - now))
+        print(
+            "\r|{}{}| {}% | {} | {} left. {}"
+                .format(
+                "█" * int(25 * count / total),
+                " " * (25 - int(25 * count / total)),
+                int(100 * count / total),
+                passed_time,
+                remaining_time,
+                message,
         ),
-        flush=True,
-        end=""
-    )
+            flush=True,
+            end=""
+        )
 
 def time_definition(time_input):
     try:
@@ -173,6 +191,7 @@ def count_down(second, message='Counting down.'):
             now=now,
             message='%s (%s)' % (message, net_time)
         )
+    print()
 
 def count_forward(now, message='Waiting'):
     passed_time = time.time() - now
