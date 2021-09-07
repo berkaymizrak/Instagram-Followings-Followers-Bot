@@ -13,10 +13,19 @@ try:
     import requests
     import json
     import ast
-    import lxml
+    from lxml import html
+    import logging
 
     import smtplib
+
     from email.mime.text import MIMEText
+    from email.mime.application import MIMEApplication
+    from email.mime.multipart import MIMEMultipart
+    from io import StringIO
+    from email.mime.base import MIMEBase
+    from email import encoders
+
+    from os.path import basename
 
     from Functions import File
     from Functions import Progress
@@ -29,7 +38,6 @@ except Exception as e:
     print(e)
     while True:
         input('\n! ! ERROR --> A module is not installed...')
-
 
 def connect_api(https=True, domain=None, endpoint='api/external_program/', code='all', program='', inform_user_periodically=False, show_error=False, sound_error=False, exit_all=False):
     if not domain:
@@ -93,7 +101,7 @@ def connect_api(https=True, domain=None, endpoint='api/external_program/', code=
 
                 return response
 
-        except:
+        except Exception as e:
             if inform_user_periodically:
                 if x % 2 == 0:
                     message = '\nAn error occurred while running, trying again...'
@@ -129,7 +137,7 @@ def check_run(program_code, program='', reload_time=30, sound_error=True):
             run = connect_api(code=program_code, program=program)  # Mostly returns True or False Boolean upto what you set on API
             if run != True:  # run only if "run" is True.
                 run = None
-        except:
+        except Exception as e:
             run = None
 
         if run:
@@ -169,18 +177,39 @@ def check_run(program_code, program='', reload_time=30, sound_error=True):
             if length_of_last_message_MAX < length_of_last_message:
                 length_of_last_message_MAX = length_of_last_message
 
-def send_email(message, subject, recipient, login_mail=None, pwd=None, sender='Email Sender', sound_error=True, show_error=True, exit_all=False, debug_mode=0):
+
+def send_email(message, subject, recipients, attach_file_name=None, attach_file_text=None, login_mail=None, pwd=None,
+               sender='Email Sender', sound_error=True, show_error=True, exit_all=False, debug_mode=0):
+
     if not login_mail:
         login_mail = os.getenv('login_mail')
     if not pwd:
         pwd = os.getenv('pwd')
 
     try:
-        msg = MIMEText(message)
+        msg = MIMEMultipart()
 
         msg['Subject'] = subject
         msg['From'] = sender
+        recipient = ", ".join(recipients)
         msg['To'] = recipient
+
+        msg.attach(MIMEText(message))
+
+        if attach_file_name and attach_file_text:
+            f = StringIO()
+            # write some content to 'f'
+            f.write(attach_file_text)
+            f.seek(0)
+
+            attach = MIMEBase('application', "octet-stream")
+            attach.set_payload(f.read())
+            encoders.encode_base64(attach)
+
+            attach.add_header('Content-Disposition',
+                           'attachment',
+                           filename=attach_file_name)
+            msg.attach(attach)
 
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.set_debuglevel(debug_mode)  # Prints all process if debug == 1
@@ -191,8 +220,9 @@ def send_email(message, subject, recipient, login_mail=None, pwd=None, sender='E
         server.login(login_mail, pwd)
 
         # Send the email
-        server.sendmail(sender, recipient, msg.as_string())
+        server.sendmail(sender, recipients, msg.as_string())
         server.close()
+        return True
     except Exception as e:
         if sound_error:
             Progress.sound_notify()
@@ -203,14 +233,17 @@ def send_email(message, subject, recipient, login_mail=None, pwd=None, sender='E
         else:
             Progress.exit_app(e=e, exit_all=exit_all)
 
+        return False
+
+
 def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=True, error_file='Recorded FALSE Proxies.txt',
-              save_ok_proxies=True, ok_file='Recorded OK Proxies.txt', number_of_min_saved_proxies=130,
-              run_test=True, test_header=None, test_url=None, test_timeout=1.5, sound_error=True):
+              save_ok_proxies=True, ok_file='Recorded OK Proxies.txt', number_of_min_saved_proxies=130, number_of_save_proxies=180,
+              run_test=True, test_header=None, test_url=None, test_timeout=1, sound_error=True, allow_print=True, no_proxy=True):
     # You can use this function with whether count_loop or get_random.
     # count_loop helps you to run it in while with using count_loop+=1 and you can receive proxies 1 by 1 in lines of proxy file.
     # if get_random set True, you get proxy randomly from proxy file without looking count_loop.
     if get_random:
-        count_loop = 1
+        count_loop = random.randint(1, 101)
 
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
     header = {"User-Agent": user_agent}
@@ -221,18 +254,33 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
 
         if not test_url:
             url = 'https://api.myip.com/'
+            # url = 'https://api.ipify.org/'
         else:
             url = test_url
 
     proxy_decide = ''
-    url_proxy = 'https://www.us-proxy.org/'
+    url_proxies = [
+        'https://hidemy.name/tr/proxy-list/',
+        'https://www.us-proxy.org/',
+    ]
+    random_proxy = random.randint(0, len(url_proxies)-1)
+    url_proxy = url_proxies[random_proxy]
     again = True
     while again:
         check_internet = True  # will use this to check internet connection without proxy only once.
         count_loop += 1
         again = False  # will leave while unless again defined True
 
-        if count_loop % 10 != 0:
+        if count_loop % 10 == 0 and no_proxy:
+            # def will return NON-PROXY each 10 times
+
+            if allow_print:
+                print('Default proxy settings setted.')
+            if selenium:
+                proxy_decide = '--no-proxy-server'
+            else:
+                proxy_decide = {}
+        else:
             # def will return NON-PROXY each 10 times
 
             error_ip_list = File.read_records_to_list(error_file, file_not_found_error=False, exit_all=False)
@@ -249,16 +297,23 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
                                         timeout=4,
                                         )
                 except:
-                    print('\n--> Error occurred while crawling new proxies.')
+                    message = 'Error occurred while crawling new proxies.'
+                    logging.log(logging.ERROR, message)
+                    if allow_print:
+                        print('\n--> ' + message)
                     again = True
                     count_loop -= 1
 
                     # continue to loop until get the new proxies.
                     continue
 
-                tree = lxml.html.fromstring(page.content)
-                ips = tree.xpath('//table[@id = "proxylisttable"]//tr/td[1]')  # list of all ips
-                ports = tree.xpath('//table[@id = "proxylisttable"]//tr/td[2]')  # list of all ports
+                tree = html.fromstring(page.content)
+                if random_proxy == 0:
+                    ips = tree.xpath('//div[@class = "table_block"]/table//tr/td[1]')  # list of all ips
+                    ports = tree.xpath('//div[@class = "table_block"]/table//tr/td[2]')  # list of all ports
+                else:
+                    ips = tree.xpath('//table[@id = "proxylisttable"]//tr/td[1]')  # list of all ips
+                    ports = tree.xpath('//table[@id = "proxylisttable"]//tr/td[2]')  # list of all ports
                 count_ip = 0
                 if len(ips) != len(ports):
                     again = True
@@ -287,6 +342,11 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
                                 count_ip += 1
                                 ok_ip_save_list.append(add_ip)
 
+                if save_ok_proxies:
+                    if len(ok_ip_save_list) > number_of_save_proxies:
+                        ok_ip_save_list = random.sample(ok_ip_save_list, number_of_save_proxies)
+                    File.save_records_list(ok_file, ok_ip_save_list, overwrite=True, exit_all=False)
+
             if not len(ok_ip_save_list):
                 again = True
                 message = "Proxy couldn't get. Trying again..."
@@ -314,8 +374,9 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
                     message = "Proxy doesn't work. Next proxy is testing...\n" \
                               "IP-Port: %s\tProxy Number: %s" % (
                         record_ip, remaining)
-                print(message)
-                print()
+                if allow_print:
+                    print(message)
+                    print()
                 again = True
                 if save_false_proxies:
                     File.write_ok_and_false_proxy(record_ip, error_file=error_file, ok_file=ok_file)
@@ -324,7 +385,10 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
             ip = record_ip_list[0]
             port = record_ip_list[1]
 
-            proxy_decide = {"http": "http://%s" % record_ip, "https": "https://%s" % record_ip}
+            proxy_decide = {
+                "http": "http://%s" % record_ip,
+                # "https": "https://%s" % record_ip,
+            }
 
             if save_false_proxies:
                 if record_ip in error_ip_list:
@@ -335,7 +399,7 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
             if run_test:
                 try:
                     if check_internet:
-                        internet_connection(timeout=4, reload_time=30, wait_for_network=True, sound_error=sound_error)
+                        internet_connection(timeout=test_timeout, reload_time=30, wait_for_network=True, sound_error=sound_error)
 
                     response = requests.get(url, proxies=proxy_decide, timeout=test_timeout, stream=True, headers=test_header)
                     if test_url:
@@ -356,8 +420,9 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
                         message = "Proxy doesn't work. Next proxy is testing...\n" \
                                   "IP: %s\tPort: %s\tProxy Number: %s" % (
                             ip, port, remaining)
-                    print(message)
-                    print()
+                    if allow_print:
+                        print(message)
+                        print()
                     again = True
                     if save_false_proxies:
                         File.write_ok_and_false_proxy(record_ip, error_file=error_file, ok_file=ok_file)
@@ -369,20 +434,14 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
                 # proxy_decide defined above.
                 pass
 
-            if get_random:
-                print("Proxy activated.\nIP: %s\tPort: %s" % (ip, port))
-            else:
-                print("Proxy activated. Proxy Number: %s.\nIP: %s\tPort: %s" % (count_loop, ip, port))
-        else:
-            # def will return NON-PROXY each 10 times
+            if allow_print:
+                if get_random:
+                    print("Proxy activated.\nIP: %s\tPort: %s" % (ip, port))
+                else:
+                    print("Proxy activated. Proxy Number: %s.\nIP: %s\tPort: %s" % (count_loop, ip, port))
 
-            print('Default proxy settings setted.')
-            if selenium:
-                proxy_decide = '--no-proxy-server'
-            else:
-                proxy_decide = {}
-
-    print()
+    if allow_print:
+        print()
     if get_random:
         return proxy_decide
     else:
@@ -405,20 +464,23 @@ def internet_connection(timeout=4, reload_time=30, wait_for_network=True, sound_
     header = {"User-Agent": user_agent}
 
     url_list = [
-        'https://api.myip.com/',
-        'https://api.ipify.org/',
+        # 'https://api.myip.com/',
+        # 'https://api.ipify.org/',
         'https://www.yahoo.com/',
         'https://www.bing.com/',
         'https://www.google.com/',
+        'https://www.amazon.com/',
+        'https://www.amazon.com.tr/',
+        'https://www.microsoft.com/',
+        'https://www.apple.com/',
     ]
-    distribution = [.2, .2, .2, .2, .2, ]
 
     message_pasted = False
     length_of_last_message = 0
     length_of_last_message_MAX = 0
     while True:
         try:
-            url = random.choices(url_list, distribution)[0]
+            url = random.choice(url_list)
 
             network = True
             response = requests.get(url, timeout=timeout, headers=header)
@@ -457,6 +519,7 @@ def internet_connection(timeout=4, reload_time=30, wait_for_network=True, sound_
                 if sound_error:
                     Progress.sound_notify()
                 message_pasted = True
+                print(url)  # DEBUG
 
             now = time.time()
             time.sleep(0.01)

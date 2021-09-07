@@ -95,7 +95,9 @@ def speech_text(text, sound_notify_work=False, exit_all=False):
         exit_app(e=e, message=message, exit_all=exit_all)
 
 def progress(count, total, now, message='In progress...', message_first=True, ):
-    remaining_time = time_definition(int((total / (count / (time.time() - now))) - (time.time() - now)))
+    remaining_time = time_definition(
+        int((total / (count / (time.time() - now))) - (time.time() - now))
+    )
     if message_first:
         passed_time = time_definition(int(time.time() - now))
         print(

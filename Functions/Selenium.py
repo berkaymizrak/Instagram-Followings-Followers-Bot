@@ -61,13 +61,13 @@ def move_to_element(browser, xpath):
         pass
 
 # Go to the link and check the xpath given if element present on the page.
-def check_page(browser, go, xpath='//*', second='5', error_loop=True, captcha_check=False):
+def check_page(browser, go, xpath='//*', second=5, error_times=3, error_loop=True, captcha_check=False):
     check_count = 0
     check_bool = True
     while check_bool:
         captcha_error_check = False
         check_count += 1 # Count each loop
-        if check_count > 10: # If number of loop more than 10, return definition
+        if check_count > error_times: # If number of loop more than 10, return definition
             print('\n--> Browser is re-opening because of too many browser errors.')
             browser.quit()
             break

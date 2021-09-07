@@ -95,7 +95,7 @@ File.save_dict_with_pprint_pformat(file=txt_file, dict_as_string=save)
 """
 # USAGE -------------------
 
-def json_dump(url=None, dictionary=None, json_file='Json Data.json', header=None):
+def json_dump(url=None, dictionary=None, json_file='Json_Data.json', header=None):
     if not header:
         user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
         header = {"User-Agent": user_agent}
@@ -115,7 +115,7 @@ def json_dump(url=None, dictionary=None, json_file='Json Data.json', header=None
 
 def dump_data(file, data, exit_all=False):
     try:
-        if isinstance(data, dict):
+        if isinstance(data, dict) or isinstance(data, list):
             file_name, file_extension = os.path.splitext(file)
             if file_extension != '.pickle':
                 file = file_name + '.pickle'
@@ -123,12 +123,12 @@ def dump_data(file, data, exit_all=False):
             pickle_out = open(file, "wb")
             pickle.dump(data, pickle_out)
             pickle_out.close()
-        elif isinstance(data, list):
-            file_name, file_extension = os.path.splitext(file)
-            if file_extension != '.npy':
-                file = file_name + '.npy'
-
-            np.save(file, data)
+        # elif isinstance(data, list):
+        #     file_name, file_extension = os.path.splitext(file)
+        #     if file_extension != '.npy':
+        #         file = file_name + '.npy'
+        #
+        #     np.save(file, data)
         else:
             message = "--> Data type is not acceptable. Data type only can be a 'list' or 'dict'."
             Progress.exit_app(message=message, exit_all=exit_all)
@@ -172,6 +172,23 @@ def read_dumped_data(file, data_type=dict, file_not_found_error=False, exit_all=
         Progress.exit_app(e=e, message=message, exit_all=exit_all)
 
     return result
+
+# LOGGING
+"""
+import logging
+logging.basicConfig(
+    filename=file,
+    filemode='a',
+    format='[%(asctime)s.%(msecs)d] - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%H:%M:%S',
+    level=logging.DEBUG
+)
+logging.info("Running Urban Planning") #  ROOT
+
+logger = logging.getLogger('urbanGUI') #  Specify USER
+logging.info("my log under urbanGUI user.")
+"""
+# LOGGING
 
 def save_records_list(txt_file, records_list, overwrite=False, exit_all=True):
     try:
@@ -468,12 +485,15 @@ def excel_create(excel, all_data, headers=None, sizes=None, locations=None, page
         if len(all_data):
             length_max = 0
             for val in all_data.values():
-                if length_max < len(val):
+                try:
+                    if length_max < len(val):
                     # Find the row which has maximum length
-                    if isinstance(val[-1], dict):
-                        length_max = len(val) - 1
-                    else:
-                        length_max = len(val)
+                        if isinstance(val[-1], dict):
+                            length_max = len(val) - 1
+                        else:
+                            length_max = len(val)
+                except:
+                    pass
 
             i = 0
             while len(headers) < length_max:
@@ -620,10 +640,15 @@ DEFINED IN 'EXCEL READ AND CREATE' REPOSITORY.
 # USAGE -------------------
 
 
-def create_word(word, my_list):
+def create_word(word, my_rows):
     try:
+        # Check and add docx if there is not at the end.
+        file_name, file_extension = os.path.splitext(word)
+        if file_extension != '.docx':
+            word = file_name + '.xlsx'
+
         message = "'%s'  --> Creating..." % word
-        total = len(my_list)
+        total = len(my_rows)
         print(message)
 
         if not total:
@@ -633,70 +658,90 @@ def create_word(word, my_list):
 
         document = Document()
 
-        # document.add_heading('Document Title', 0)
-        # p = document.add_paragraph('A plain paragraph having some ')
-        # p.add_run('bold').bold = True
-        # p.add_run(' and some ')
-        # p.add_run('italic.').italic = True
-        # document.add_heading('Heading, level 1', level=1)
-        # document.add_paragraph('Intense quote', style='Intense Quote')
-        # document.add_paragraph(
-        #     'first item in unordered list', style='List Bullet'
-        # )
-        # document.add_paragraph(
-        #     'first item in ordered list', style='List Number'
-        # )
-        # document.add_picture('monty-truth.png', width=Inches(1.25))
-        # records = (
-        #     (3, '101', 'Spam'),
-        #     (7, '422', 'Eggs'),
-        #     (4, '631', 'Spam, spam, eggs, and spam')
-        # )
-        # table = document.add_table(rows=1, cols=3)
-        # hdr_cells = table.rows[0].cells
-        # hdr_cells[0].text = 'Qty'
-        # hdr_cells[1].text = 'Id'
-        # hdr_cells[2].text = 'Desc'
-        # for qty, id, desc in records:
-        #     row_cells = table.add_row().cells
-        #     row_cells[0].text = str(qty)
-        #     row_cells[1].text = id
-        #     row_cells[2].text = desc
+        """
+        EXTRA DETAILS FOR DESIGN:     
+    
+        document.add_heading('Document Title', 0)
+        
+        p = document.add_paragraph('A plain paragraph having some ')
+        p.add_run('bold').bold = True
+        p.add_run(' and some ')
+        p.add_run('italic.').italic = True
+        
+        document.add_heading('Heading, level 1', level=1)
+        
+        document.add_picture('monty-truth.png', width=Inches(1.25))
+        records = (
+            (3, '101', 'Spam'),
+            (7, '422', 'Eggs'),
+            (4, '631', 'Spam, spam, eggs, and spam')
+        )
 
-        # document.add_page_break()
+        document.add_page_break()
+        """
 
         styles = document.styles
-        style_header1 = styles.add_style('Header1', WD_STYLE_TYPE.PARAGRAPH)
-        style_header2 = styles.add_style('Header2', WD_STYLE_TYPE.PARAGRAPH)
-        # style.base_style = styles['Normal']
 
-        style = document.styles['Header1']
+        style = document.styles['Normal']
         font = style.font
-        font.bold = True
         font.name = 'Arial'
         font.size = Pt(12)
 
-        style_base = document.styles['Normal']
-        font = style_base.font
+        style = styles.add_style('MyHeader1', WD_STYLE_TYPE.PARAGRAPH)
+        font = style.font
+        font.bold = True
         font.name = 'Arial'
-        font.size = Pt(11)
+        font.size = Pt(14)
 
+        style = styles.add_style('MyHeader2', WD_STYLE_TYPE.PARAGRAPH)
+        font = style.font
+        font.name = 'Arial'
+        font.size = Pt(13)
 
-        paragraph = document.add_paragraph('HEADER')
-        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        paragraph.style = style_header1
+        for row in my_rows:
+            table = row.get('table', False)
+            if not table:
+                text = row.get('text', '')
+                style_name = row.get('style', None)
+                location = row.get('location', 0)
+                bold = row.get('bold', False)
+                italic = row.get('italic', False)
+                underline = row.get('underline', False)
+                size = row.get('size', 12)
 
-        paragraph = document.add_paragraph()
-        run = paragraph.add_run('Hello World')
-        run.bold = True
-        run.underline = True
+                paragraph = document.add_paragraph()
+                run = paragraph.add_run(text)
 
-        paragraph = document.add_paragraph()
-        run = paragraph.add_run('\nTest text.')
+                if style_name:
+                    style = document.styles[style_name]
+                    paragraph.style = style
+                else:
+                    run.bold = bold
+                    run.italic = italic
+                    run.underline = underline
 
-        paragraph = document.add_paragraph()
-        run = paragraph.add_run('\n\tTest text2.')
-        run.bold = True
+                    font = style.font
+                    font.size = Pt(size)
+
+                paragraph.alignment = location  # 0: left, 1: center, 2: right, 3: justify
+            else:
+                data = row.get('data', [])
+                border = row.get('border', False)
+
+                if len(data):
+                    table_obj = document.add_table(rows=0, cols=len(data[0]), )
+                    if border:
+                        table_obj.style = 'TableGrid'
+
+                    for count_row, table_row in enumerate(data):
+                        row_cells = table_obj.add_row().cells
+                        for enum, cell in enumerate(table_row):
+                            row_cells[enum].text = str(cell)
+
+                        if count_row == 0:
+                            for count_cell in range(len(table_row)):
+                                row_cells[count_cell].paragraphs[0].runs[0].font.bold = True
+                                row_cells[count_cell].paragraphs[0].alignment = 1
 
         print()
         document.save(word)
@@ -709,3 +754,46 @@ def create_word(word, my_list):
     except Exception as e:
         message = "--> An error occurred while creating file... '%s'" % word
         Progress.exit_app(e=e, message=message, exit_all=False)
+"""
+USAGE:
+
+my_rows = [
+    {'text': 'Hello World. Center, bold, italic, underline, size:15', 'style': 'Normal', 'location': 1, 'bold': True, 'italic': True, 'underline': True, 'size': 15},
+    {'text': 'My Special Header. Right, bold', 'style': 'MyHeader1', 'location': 2, 'bold': True, 'italic': False, 'underline': False},
+    {'text': 'Hello World. Left, normal', 'style': 'Normal', 'location': 0},
+    {'text': 'Lorem ipsum. Center, italic', 'style': 'Normal', 'location': 1, 'italic': True, },
+    {'text': 'Specified text. Left, underline', 'style': 'Normal', 'location': 0, 'underline': True},
+]  # location = 0: left, 1: center, 2: right, 3: justify
+
+# ---- OR : 
+my_rows = []  # location = 0: left, 1: center, 2: right, 3: justify
+
+row = {
+    'text': 'Hello World. Left, normal',
+    'style': 'Normal',
+    'location': 0
+}
+my_rows.append(row)
+
+data = []
+data.append(['Product', 'Quantity', 'Price', ])
+data.append(['AI Builder Capacity', '1', '$324,45', ])
+row = {
+    'table': True,
+    'data': data,
+    'border': True,
+}
+my_rows.append(row)
+
+row = {
+    'text': 'Lorem ipsum. Center, italic',
+    'style': 'Normal', 
+    'location': 1, 
+    'italic': True,
+}
+my_rows.append(row)
+# --------
+
+create_word('test', my_rows)
+"""
+
