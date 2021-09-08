@@ -6,10 +6,12 @@
 try:
     import time
 
-    import winsound
+    import sys
 
-    # pip install pywin32
-    import win32com.client as wincl
+    if sys.platform == 'win32':
+        import winsound
+        # pip install pywin32
+        import win32com.client as wincl
 except Exception as e:
     print()
     print(e)
@@ -54,45 +56,56 @@ def exit_app(e=None, message=None, sound=False, sound_times=0, exit_all=True):
         print()
 
 def sound_notify(show_error=True):
-    try:
-        for i in range(0, 3):
-            frequency = 2500  # Set Frequency To 2500 Hertz
-            duration = 750  # Set Duration To 1000 ms == 1 second
-            winsound.Beep(frequency, duration)
+    if sys.platform == 'win32':
+        try:
+            for i in range(0, 3):
+                frequency = 2500  # Set Frequency To 2500 Hertz
+                duration = 750  # Set Duration To 1000 ms == 1 second
+                winsound.Beep(frequency, duration)
 
-        for k in range(0, 3):
-            frequency = 2500  # Set Frequency To 2500 Hertz
-            duration = 500  # Set Duration To 1000 ms == 1 second
-            winsound.Beep(frequency, duration)
-    except Exception as e:
+            for k in range(0, 3):
+                frequency = 2500  # Set Frequency To 2500 Hertz
+                duration = 500  # Set Duration To 1000 ms == 1 second
+                winsound.Beep(frequency, duration)
+        except Exception as e:
+            if show_error:
+                print('Error on windows sound notification:')
+                print(e)
+    else:
         if show_error:
-            print('Error on windows sound notification:')
-            print(e)
+            print('Sound notification only works on Windows.')
 
 def sound_notify_times(times=3, frequency=2500, duration=500, show_error=True):
-    try:
-        for k in range(0, times):
-            frequency_sound = frequency  # Set Frequency To 2500 Hertz
-            if times == 1:
-                duration_sound = 750  # Set Duration To 1000 ms == 1 second
-            else:
-                duration_sound = duration  # Set Duration To 1000 ms == 1 second
-            winsound.Beep(frequency_sound, duration_sound)
-    except Exception as e:
+    if sys.platform == 'win32':
+        try:
+            for k in range(0, times):
+                frequency_sound = frequency  # Set Frequency To 2500 Hertz
+                if times == 1:
+                    duration_sound = 750  # Set Duration To 1000 ms == 1 second
+                else:
+                    duration_sound = duration  # Set Duration To 1000 ms == 1 second
+                winsound.Beep(frequency_sound, duration_sound)
+        except Exception as e:
+            if show_error:
+                print('Error on windows sound notification:')
+                print(e)
+    else:
         if show_error:
-            print('Error on windows sound notification:')
-            print(e)
+            print('Sound notification only works on Windows.')
 
 def speech_text(text, sound_notify_work=False, exit_all=False):
-    try:
-        speak = wincl.Dispatch("SAPI.SpVoice")
-        speak.Speak(text)
-    except Exception as e:
-        if sound_notify_work:
-            sound_notify_times(times=1)
-        message = '--> An error occurred while speeching text:\n' \
-                  '"%s"' % text
-        exit_app(e=e, message=message, exit_all=exit_all)
+    if sys.platform == 'win32':
+        try:
+            speak = wincl.Dispatch("SAPI.SpVoice")
+            speak.Speak(text)
+        except Exception as e:
+            if sound_notify_work:
+                sound_notify_times(times=1)
+            message = '--> An error occurred while speeching text:\n' \
+                      '"%s"' % text
+            exit_app(e=e, message=message, exit_all=exit_all)
+    else:
+        print('Speech text function only works on Windows.')
 
 def progress(count, total, now, message='In progress...', message_first=True, ):
     remaining_time = time_definition(

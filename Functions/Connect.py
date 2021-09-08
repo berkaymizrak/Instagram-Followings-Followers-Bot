@@ -134,7 +134,7 @@ def check_run(program_code, program='', reload_time=30, sound_error=True):
     length_of_last_message_MAX = 0
     while True:
         try:
-            run = connect_api(code=program_code, program=program)  # Mostly returns True or False Boolean upto what you set on API
+            run = connect_api(code=program_code, program=program)  # Mostly returns True or False Boolean up to what you set on API
             if run != True:  # run only if "run" is True.
                 run = None
         except Exception as e:
