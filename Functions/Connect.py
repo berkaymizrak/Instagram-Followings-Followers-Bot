@@ -285,7 +285,9 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
 
             error_ip_list = File.read_records_to_list(error_file, file_not_found_error=False, exit_all=False)
             ok_ip_list = File.read_records_to_list(ok_file, file_not_found_error=False, exit_all=False)
-            ok_ip_save_list = ok_ip_list
+            ok_ip_save_list = []
+            for i in ok_ip_list:
+                ok_ip_save_list.append(i)
             if (len(ok_ip_list) < number_of_min_saved_proxies) and save_ok_proxies:
                 # if number saved proxies to the file less than minimum required number of proxies,
                 # will crawl more new proxies.
@@ -308,10 +310,13 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
                     continue
 
                 tree = html.fromstring(page.content)
-                if random_proxy == 0:
-                    ips = tree.xpath('//div[@class = "table_block"]/table//tr/td[1]')  # list of all ips
-                    ports = tree.xpath('//div[@class = "table_block"]/table//tr/td[2]')  # list of all ports
-                else:
+                if 'hidemy.name' in url_proxy:
+                    ips = tree.xpath('//div[@class = "table_block"]/table//tbody/tr/td[1]')  # list of all ips
+                    ports = tree.xpath('//div[@class = "table_block"]/table//tbody/tr/td[2]')  # list of all ports
+                elif 'us-proxy' in url_proxy:
+                    ips = tree.xpath('//div[contains(@class, "fpl-list")]//table//tr/td[1]')  # list of all ips
+                    ports = tree.xpath('//div[contains(@class, "fpl-list")]//table//tr/td[2]')  # list of all ports
+                else:  # FOR NO ERROR
                     ips = tree.xpath('//table[@id = "proxylisttable"]//tr/td[1]')  # list of all ips
                     ports = tree.xpath('//table[@id = "proxylisttable"]//tr/td[2]')  # list of all ports
                 count_ip = 0
@@ -348,6 +353,7 @@ def get_proxy(selenium=True, get_random=True, count_loop=1, save_false_proxies=T
                     File.save_records_list(ok_file, ok_ip_save_list, overwrite=True, exit_all=False)
 
             if not len(ok_ip_save_list):
+                print(ok_ip_save_list)
                 again = True
                 message = "Proxy couldn't get. Trying again..."
                 Progress.exit_app(message=message, exit_all=False)
