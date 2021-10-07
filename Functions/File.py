@@ -64,10 +64,13 @@ def create_folder(folder_name, path='./', exit_all=True):
     try:
         if not os.path.exists(path):
             os.mkdir(path)
+            return True
     except Exception as e:
         message = '--> An error occurred while creating folder. Please try again with running program as administrator or create folder by yourself.\n' \
                   'Folder Name: %s' % folder_name
         Progress.exit_app(message=message, e=e, exit_all=exit_all)
+    return False
+
 
 def windows_folder_name(name):
     forbidden_character_list = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
@@ -209,13 +212,13 @@ File.save_records_list(txt_file=txt_file, records_list=[last_id], overwrite=True
 """
 # USAGE for saving last location of automation app --------------------
 
-def read_records_to_list(txt_file, file_not_found_error=False, exit_all=True):
-    records = list()
+def read_records_to_list(txt_file, encoding='utf-8', file_not_found_error=False, exit_all=True):
+    records = []
     message = ''
     error_text = ''
     error_def = False
     try:
-        file = open(txt_file, 'r', encoding='latin-1')
+        file = open(txt_file, 'r', encoding=encoding)  # latin-1 | utf-8
         for line in file:
             line = line.replace('\n', '')
             records.append(line)

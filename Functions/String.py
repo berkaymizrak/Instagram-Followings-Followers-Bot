@@ -28,6 +28,63 @@ class colors:
 # print(bcolors.GREEN + "[+] Online Proxy: " + bcolors.BOLD + str(55) + bcolors.ENDC + "\n")
 
 
+def from_string_to_type(value, val_type):
+    # val_type:
+    # try_all
+    # str
+    # int
+    # float
+    # datetime_%Y.%m.%d %H:%M
+    # bool
+
+    count = 0
+    type_list = ['int', 'float', 'bool', 'str']
+    test_value = None
+    while True:
+        if val_type == 'try_all':
+            if count == len(type_list):
+                break
+            test_val_type = type_list[count]
+        else:
+            if count == 1:
+                break
+            test_val_type = val_type
+
+        if test_value:
+            break
+        test_value = value
+
+        try:
+            if test_val_type == 'str':
+                test_value = str(test_value)
+            elif test_val_type == 'int':
+                test_value = int(test_value)
+            elif test_val_type == 'float':
+                test_value = float(test_value)
+            elif 'datetime_' in test_val_type:  # datetime_%Y.%m.%d
+                test_val_type = test_val_type.replace('datetime_', '')
+                test_value = datetime.strptime(test_value, test_val_type)
+            elif test_val_type == 'bool':
+                if str(test_value).lower() == 'true':
+                    test_value = True
+                elif str(test_value).lower() == 'false':
+                    test_value = False
+                    if val_type == 'try_all':
+                        break
+                elif str(test_value).lower() == 'none':
+                    test_value = None
+                    if val_type == 'try_all':
+                        break
+                else:
+                    test_value = None
+        except:
+            test_value = None
+
+        count += 1
+
+    return test_value
+
+
 # This function helps me to name files I create by my automation apps
 
 def timestamp_def(seperate=False, exit_all=True, alternative='timestamp_error', with_space=False):
@@ -51,6 +108,11 @@ def timestamp_def(seperate=False, exit_all=True, alternative='timestamp_error', 
         return date, hour
     else:
         return now
+
+def create_uniq_number(length_of_it=3):
+    now = str(time.time())
+    unique_id = now[-length_of_it:]
+    return unique_id
 
 # Turkish characters for below functions.
 rep = [

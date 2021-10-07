@@ -60,8 +60,9 @@ def move_to_element(browser, xpath):
     except:
         pass
 
+
 # Go to the link and check the xpath given if element present on the page.
-def check_page(browser, go, xpath='//*', second=5, error_times=3, error_loop=True, captcha_check=False):
+def check_page(browser, go, xpath='//*', second=5, error_times=3, error_loop=True, captcha_check=False, proxy_error_detect=True):
     check_count = 0
     check_bool = True
     while check_bool:
@@ -97,10 +98,18 @@ def check_page(browser, go, xpath='//*', second=5, error_times=3, error_loop=Tru
                 print()
                 print('-' * 15)
             else:
+                result = check_errors_of_page(browser, proxy_error_detect, browser.page_source)
+                if result:
+                    return result
+
                 print("\n--> Desired element couldn't find on page. Trying again...")
                 print()
                 print('-' * 15)
         except Exception as e:
+            result = check_errors_of_page(browser, proxy_error_detect, str(e))
+            if result:
+                return result
+
             captcha_error_check = True  # Page gave error so check if there is captcha on the page
             try:
                 browser.current_url  # to check if browser is still open, otherwise show other message
@@ -119,11 +128,34 @@ def check_page(browser, go, xpath='//*', second=5, error_times=3, error_loop=Tru
             if r:
                 # If there is captcha on the page, return def and then try to solve it in anyway you like
                 # (Solve it by automated way or manual)
-                return True
+                return 'error_captcha'
         if not error_loop:
-            # if user overwrite function not to reflesh page many times untill find the element desired by xpath, return
+            # if user overwrite the function to not reflesh page many times untill find the element desired by xpath, return
             return None
     return None
+
+def check_errors_of_page(browser, proxy_error_detect, check_text):
+    if proxy_error_detect:
+        ERR_list = [
+            'ERR_TUNNEL_CONNECTION_FAILED',
+            'ERR_PROXY_CONNECTION_FAILED',
+            'ERR_EMPTY_RESPONSE',
+        ]
+        for ERR in ERR_list:
+            if ERR in check_text or \
+                    '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body></body></html>' == check_text:
+                try:
+                    browser.quit()
+                except:
+                    pass
+                print()
+                print(ERR)
+                print("--> Proxy is not working correct. Browser is closed.")
+                print()
+                print('-' * 15)
+                return 'error_proxy'
+    return False
+
 
 def turn_off_all_alerts(browser, accept=True, show_error=False, sound_for_error=False, exit_all=False):
     # options.add_argument("--disable-popup-blocking")  # This is argument for selenium browser to block everything
