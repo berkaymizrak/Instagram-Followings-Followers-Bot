@@ -548,6 +548,7 @@ def get_proxy_orbit(selenium=True, get_random=True, count_loop=1, save_false_pro
     # count_loop helps you to run it in while with using count_loop+=1 and you can receive proxies 1 by 1 in lines of proxy file.
     # if get_random set True, you get proxy randomly from proxy file without looking count_loop.
     if allow_print:
+        print()
         print('--> Proxy scraper is started.')
         print()
     if get_random:
@@ -580,10 +581,11 @@ def get_proxy_orbit(selenium=True, get_random=True, count_loop=1, save_false_pro
     again = True
     curl = ''
     while again:
-        url_proxy = "https://api.proxyorbit.com/v1/?token=%s" % API_KEY
-        url_proxy += '&ssl=%s' % str(for_https).lower()
+        url_proxy = "http://api.proxyorbit.com/v1/"
+        url_proxy += '?ssl=%s' % str(for_https).lower()
         url_proxy += '&protocols=http'
         url_proxy += '&count=%s' % number_of_save_proxies
+        url_proxy += '&token=%s' % API_KEY
         check_internet = True  # will use this to check internet connection without proxy only once.
         count_loop += 1
         again = False  # will leave while unless again defined True
