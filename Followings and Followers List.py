@@ -39,9 +39,10 @@ except Exception as e:
         input('\n! ! ERROR --> A module is not installed...')
 
 
-def scroll_div(num):
-    xpath_scroll_elem = '//div[contains(@role, "dialog")]//div/ul/..'
-    class_scroll = browser.find_elements("xpath", xpath_scroll_elem)[-1].get_attribute('class')
+
+def scroll_div(num, xpath):
+    class_scroll = browser.find_element("xpath", xpath).get_attribute('class')
+    class_scroll = class_scroll.split(' ')[0]
     jscommand = f"""
     followers = document.querySelector(".{class_scroll}");
     followers.scrollTo(0, followers.scrollHeight);
@@ -234,6 +235,7 @@ while True:
 
         scroll_div(
             num=num_followers,
+            xpath='//div[contains(@role, "dialog")]/div/div/div[3]',
         )
 
         print('\n\nAccount Followers are calculating, please wait...')
@@ -273,6 +275,7 @@ while True:
 
         scroll_div(
             num=num_following,
+            xpath='//div[contains(@role, "dialog")]/div/div/div[4]',
         )
 
         print('\n\nAccount Followings are calculating, please wait...')
