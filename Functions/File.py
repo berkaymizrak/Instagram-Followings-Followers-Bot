@@ -19,11 +19,11 @@ try:
     import json
     import ast
 
-    from docx.shared import Inches
-    from docx import Document
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.shared import Pt
-    from docx.enum.style import WD_STYLE_TYPE
+    # from docx.shared import Inches
+    # from docx import Document
+    # from docx.enum.text import WD_ALIGN_PARAGRAPH
+    # from docx.shared import Pt
+    # from docx.enum.style import WD_STYLE_TYPE
 
     from Functions import Progress
     from Functions import String

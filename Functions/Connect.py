@@ -13,7 +13,7 @@ try:
     import requests
     import json
     import ast
-    from lxml import html, etree
+    # from lxml import html, etree
     import logging
 
     import smtplib

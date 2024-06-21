@@ -15,7 +15,6 @@ print('\n\t%s' % (program))
 print('\n\t\twww.BerkayMizrak.com')
 print('\n\t\t\twww.DaktiNetwork.com')
 
-
 try:
     import time
     import os
@@ -26,6 +25,7 @@ try:
     from selenium.webdriver.support import expected_conditions as EC
 
     import dotenv
+
     dotenv.load_dotenv()
 
     from Functions import Progress
@@ -41,13 +41,12 @@ except Exception as e:
 
 def scroll_div(num):
     xpath_scroll_elem = '//div[contains(@role, "dialog")]//div/ul/..'
-    class_scroll = browser.find_element_by_xpath(xpath_scroll_elem).get_attribute('class')
-    jscommand = """
-    followers = document.querySelector(".%s");
+    class_scroll = browser.find_elements("xpath", xpath_scroll_elem)[-1].get_attribute('class')
+    jscommand = f"""
+    followers = document.querySelector(".{class_scroll}");
     followers.scrollTo(0, followers.scrollHeight);
-    var lenOfPage=followers.scrollHeight;
-    return lenOfPage;
-    """ % class_scroll
+    return followers.scrollHeight;
+    """
     lenOfPage = browser.execute_script(jscommand)
     match = False
     now = time.time()
@@ -58,7 +57,7 @@ def scroll_div(num):
         lastCount = lenOfPage
         time.sleep(1)
         lenOfPage = browser.execute_script(jscommand)
-        num_current_follows = len(browser.find_elements_by_xpath("//a[contains(@class,'notranslate')]"))
+        num_current_follows = len(browser.find_elements("xpath", "//a[contains(@class,'notranslate')]"))
         if lastCount == lenOfPage:
             if num > num_current_follows:
                 fetched = False
@@ -73,7 +72,8 @@ def scroll_div(num):
             count += 1
         Progress.progress(count=num_current_follows, total=num, now=now, message='Fetching...')
         if count > 15:
-            print('\n--> It has been too long time that program could not fetch new data. Now will ignore and continue to process.')
+            print(
+                '\n--> It has been too long time that program could not fetch new data. Now will ignore and continue to process.')
             match = True
 
 
@@ -98,10 +98,10 @@ if not pwd:
 while True:
     try:
         user = int(input("\n1: Your account\n"
-                 "2: Anyone else's account\n"
-                 "Whose account will be checked for followers? [select 1 or 2] "))
+                         "2: Anyone else's account\n"
+                         "Whose account will be checked for followers? [select 1 or 2] "))
 
-        if user not in [1, 2,]:
+        if user not in [1, 2, ]:
             raise Exception
 
         if user == 1:
@@ -112,12 +112,11 @@ while True:
     except:
         print('\n--> Please select only showed numbers. [1 or 2]')
 
-
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
 
 # add path to create execution easily (using such as pyinstaller)
 File._append_run_path()
-driver = File.source_path('chromedriver.exe')
+# driver = File.source_path('chromedriver.exe')
 
 # Check if program has permission to run from developer by API
 Connect.check_run(code, program, 30, sound_error=True)  # <-- Remove this line in your app or you can create yours.
@@ -137,7 +136,11 @@ while True:
             options = webdriver.ChromeOptions()
             options.add_argument('user-agent={%s}' % user_agent)
             options.add_argument('--blink-settings=imagesEnabled=false')  # Remove images from pages to open fast
-            browser = webdriver.Chrome(options=options, executable_path=driver)
+            # browser = webdriver.Chrome(options=options, executable_path=driver)
+            cService = webdriver.ChromeService(executable_path='chromedriver/chromedriver')
+            browser = webdriver.Chrome(service=cService)
+
+        # xattr -d com.apple.quarantine chromedriver/chromedriver
 
         count_reflesh = 0
         while not login_succesful:
@@ -149,7 +152,7 @@ while True:
 
             # Go to the link and check the xpath given if element present on the page.
             url = 'https://www.instagram.com/accounts/login/'
-            xpath = '//div[@id = "react-root"]'
+            xpath = '//input[@name = "username"]'
             Selenium.check_page(browser, url, xpath, 10)
 
             try:
@@ -159,13 +162,13 @@ while True:
                 Progress.exit_app(message=message, exit_all=False)
                 continue
 
-            element_username = browser.find_element_by_name("username")
-            element_password = browser.find_element_by_name("password")
+            element_username = browser.find_element("name", "username")
+            element_password = browser.find_element("name", "password")
 
             element_username.send_keys(username)
             element_password.send_keys(pwd)
 
-            login_button = browser.find_element_by_xpath("//button[contains(@type,'submit')]")
+            login_button = browser.find_element("xpath", "//button[contains(@type,'submit')]")
 
             login_button.click()
 
@@ -188,40 +191,46 @@ while True:
                 continue
 
             url = 'https://www.instagram.com/'
-            xpath = '//div[@id = "react-root"]'
+            xpath = '//body'
             Selenium.check_page(browser, url, xpath, 10)
 
-            WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.XPATH, "//a[contains(@class,'notranslate')]")))
+            WebDriverWait(browser, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//a[contains(@class,'notranslate')]")))
             print('\n--- Successfully Logged In! ---')
             login_succesful = True
 
         url = 'https://www.instagram.com/%s/' % control_user
-        xpath = '//div[@id = "react-root"]'
+        xpath = '//body'
         Selenium.check_page(browser, url, xpath, 10)
 
         try:
             xpath = "//a[contains(@href, '%s')]" % control_user.lower()
-            WebDriverWait(browser, 3).until(EC.presence_of_element_located((By.XPATH, xpath))) # wait for element to see on page
+            WebDriverWait(browser, 3).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))  # wait for element to see on page
         except:
             xpath = "//h2[contains(text(), 'Private')]"
-            WebDriverWait(browser, 1.5).until(EC.presence_of_element_located((By.XPATH, xpath))) # wait for element to see on page
+            WebDriverWait(browser, 1.5).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))  # wait for element to see on page
             browser.quit()
             message = 'No data found because user account is private. Program stopped.'
             Progress.exit_app(message=message, exit_all=True)
 
-        WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.XPATH, "//a[contains(@href, 'followers')]")))
+        WebDriverWait(browser, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//a[contains(@href, 'followers')]")))
 
-        button_followers = browser.find_element_by_xpath("//a[contains(@href, 'followers')]")
+        button_followers = browser.find_element("xpath", "//a[contains(@href, 'followers')]")
 
         button_followers.click()
 
-        xpath_scroll_elem = '//div[contains(@role, "dialog")]//div/ul/..'
+        xpath_scroll_elem = '//div[contains(@role, "dialog")]/div/div/div[last()][contains(@class, "_")]'
         WebDriverWait(browser, 10).until(EC.visibility_of_element_located((By.XPATH, xpath_scroll_elem)))
 
-        num_followers = int(browser.find_element_by_xpath("//a[contains(@href, 'followers')]/span").text)
-        num_following = int(browser.find_element_by_xpath("//a[contains(@href, 'following')]/span").text)
+        num_followers = int(browser.find_element("xpath", "//a[contains(@href, 'followers')]/span").text)
+        num_following = int(browser.find_element("xpath", "//a[contains(@href, 'following')]/span").text)
 
         print('\nAccount Followers are fetching. (%s Followers) It might take some time...' % num_followers)
+
+        time.sleep(3)
 
         scroll_div(
             num=num_followers,
@@ -230,7 +239,7 @@ while True:
         print('\n\nAccount Followers are calculating, please wait...')
 
         followers_list = list()
-        followers = browser.find_elements_by_xpath("//a[contains(@class,'notranslate')]")
+        followers = browser.find_elements("xpath", "//a[contains(@class,'notranslate')]")
 
         now = time.time()
         for follower in followers:
@@ -243,21 +252,24 @@ while True:
 
         print("\n --> " + str(len(followers_list)) + " followers successfully fetched. ")
 
-
         try:
-            browser.find_element_by_xpath("//button[contains(text(),'Close')]").click()
+            browser.find_element("xpath", "//*[contains(text(),'Close')]/../../..").click()
         except:
             try:
-                browser.find_element_by_xpath("//div[contains(@role, 'dialog')]//h1/following-sibling::div/button").click()
+                browser.find_element("xpath",
+                                     "//div[contains(@role, 'dialog')]//h1/following-sibling::div/button").click()
             except:
                 browser.refresh()
 
-        button_following = browser.find_element_by_xpath("//a[contains(@href, 'following')]")
+        time.sleep(3)
+        button_following = browser.find_element("xpath", "//a[contains(@href, 'following')]")
         button_following.click()
 
         WebDriverWait(browser, 10).until(EC.visibility_of_element_located((By.XPATH, xpath_scroll_elem)))
 
         print('\nAccount Followings are fetching. (%s Followings) It might take some time...' % num_following)
+
+        time.sleep(3)
 
         scroll_div(
             num=num_following,
@@ -266,7 +278,7 @@ while True:
         print('\n\nAccount Followings are calculating, please wait...')
 
         followings_list = list()
-        followings = browser.find_elements_by_xpath("//a[contains(@class,'notranslate')]")
+        followings = browser.find_elements("xpath", "//a[contains(@class,'notranslate')]")
 
         now = time.time()
         for following in followings:
@@ -310,7 +322,8 @@ while True:
         File.save_records_list(txt_file=txt_file_followers, records_list=followers_list, overwrite=True, exit_all=False)
 
         txt_file_followings = "insta-not-folow-back-to-you_%s.txt" % control_user
-        File.save_records_list(txt_file=txt_file_followings, records_list=followings_list_final, overwrite=True, exit_all=False)
+        File.save_records_list(txt_file=txt_file_followings, records_list=followings_list_final, overwrite=True,
+                               exit_all=False)
 
         Progress.sound_notify_times(3)
 
@@ -329,4 +342,3 @@ while True:
         message = 'An error occurred. Will start again.'
         Progress.exit_app(e=e, message=message, exit_all=False)
         continue
-
